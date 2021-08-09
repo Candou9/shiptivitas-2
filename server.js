@@ -124,10 +124,21 @@ app.put('/api/v1/clients/:id', (req, res) => {
   let { status, priority } = req.body;
   let clients = db.prepare('select * from clients').all();
   const client = clients.find(client => client.id === id);
-
   /* ---------- Update code below ----------*/
+  if(status !== 'none' & status == 'in-progress' || status == 'complete'|| status == 'backlog'){
+    const transaction = db.prepare('UPDATE clients SET status = ? WHERE id = ?');
+    transaction.run(status, id);
+  }
+  if(priority==null){
+    const stmt = db.prepare('SELECT MAX(priority) AS "MaxPriority" from clients  WHERE status = ?').get(status);
+    const MaxPriority=stmt['MaxPriority'];
 
-
+    const transaction = db.prepare('UPDATE clients SET priority = ? WHERE id = ?');
+    transaction.run(MaxPriority, id)
+  }else{
+    const transaction = db.prepare('UPDATE clients SET priority = ? WHERE id = ?');
+    transaction.run(priority, id)
+  }
 
   return res.status(200).send(clients);
 });
